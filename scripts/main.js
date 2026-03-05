@@ -1,6 +1,10 @@
+const driverMap = {};
+const grandPrix = [];
+
 async function main() {
-    await fetchDriverInfo();
     const standingsTable = document.getElementById("standings-table");
+    await fetchDriverInfo();
+    await fetchGrandPrix();
     fillTable(players, standingsTable);
 }
 
@@ -20,6 +24,20 @@ async function fetchDriverInfo() {
         url += `&driver_number=${nbr}`;
     });
     data = await cachefetch(url);
+
+    data.forEach(driver => {
+        driverMap[driver.driver_number] = driver;
+    });
+}
+
+async function fetchGrandPrix() {
+    let data = await cachefetch(`https://api.openf1.org/v1/meetings?year=${year}`);
+    data.forEach(meeting => {
+        if (meeting.meeting_name.toLowerCase().includes("grand prix")) {
+            grandPrix.push(meeting);
+        }
+    });
+    grandPrix.sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
 }
 
 async function cachefetch(url) {
@@ -38,29 +56,43 @@ async function cachefetch(url) {
 }
 
 function fillTable(players, table) {
+    const headerRow = createChild("tr", table);
+
+    createFilledChild("th", headerRow, "Pos.");
+    createFilledChild("th", headerRow, "Player");
+    createFilledChild("th", headerRow, "Drivers");
+
     players.forEach(player => {
-        const playerRow = document.createElement("tr");
+        const playerRow = createChild("tr", table);
 
-        const nameCol = document.createElement("td");
-        nameCol.innerHTML = player.name;
-        playerRow.appendChild(nameCol);
+        const posCol = createFilledChild("td", playerRow, "0");
+        posCol.rowSpan = player.drivers.length;
+        const nameCol = createFilledChild("td", playerRow, player.name);
+        nameCol.rowSpan = player.drivers.length;
 
-        const driversCol = document.createElement("td");
-        const driversSubTable = document.createElement("table");
-        player.drivers.forEach(driver => {
-            const driverRow = document.createElement("tr");
-
-            const nbrCol = document.createElement("td");
-            nbrCol.innerHTML = driver;
-
-            driverRow.appendChild(nbrCol);
-            driversSubTable.appendChild(driverRow)
+        let first = true;
+        player.drivers.forEach(driverNbr => {
+            if (first) {
+                createFilledChild("td", playerRow, driverMap[driverNbr]["name_acronym"]);
+                first = false;
+            } else {
+                const driverRow = createChild("tr", table);
+                createFilledChild("td", driverRow, driverMap[driverNbr]["name_acronym"]);
+            }
         });
-        driversCol.appendChild(driversSubTable);
-        playerRow.appendChild(driversCol);
-        
-        table.appendChild(playerRow);
     });
+}
+
+function createChild(type, parent) {
+    const element = document.createElement(type);
+    parent.appendChild(element);
+    return element;
+}
+
+function createFilledChild(type, parent, innerHTML) {
+    const element = createChild(type, parent);
+    element.innerHTML = innerHTML;
+    return element;
 }
 
 main()
