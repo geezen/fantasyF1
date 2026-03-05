@@ -1,3 +1,5 @@
+const year = "2026";
+
 const players = [
     {
         name: "Marcus",
@@ -15,4 +17,4 @@ const players = [
         name: "David",
         drivers: [1, 44, 55, 30, 11]
     }
-]
+];
