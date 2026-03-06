@@ -1,10 +1,12 @@
-const driverMap = {};
+const driverMap = new Map();
 const grandPrix = [];
 
 async function main() {
     const standingsTable = document.getElementById("standings-table");
     await fetchDriverInfo();
     await fetchGrandPrix();
+    await new Promise(r => setTimeout(r, 1000));
+    await fetchChampionshipResults();
     fillTable(players, standingsTable);
 }
 
@@ -19,25 +21,36 @@ async function fetchDriverInfo() {
     });
 
     console.log(`Fetching info for drivers ${allDriverNbrs}`);
-    let url = "https://api.openf1.org/v1/drivers?session_key=11465"
+    let url = `https://api.openf1.org/v1/drivers?session_key=${sessionKey}`
     allDriverNbrs.forEach(nbr => {
         url += `&driver_number=${nbr}`;
     });
     data = await cachefetch(url);
 
     data.forEach(driver => {
-        driverMap[driver.driver_number] = driver;
+        driverMap.set(driver.driver_number, driver);
     });
 }
 
 async function fetchGrandPrix() {
-    let data = await cachefetch(`https://api.openf1.org/v1/meetings?year=${year}`);
+    const data = await cachefetch(`https://api.openf1.org/v1/meetings?year=${year}`);
     data.forEach(meeting => {
         if (meeting.meeting_name.toLowerCase().includes("grand prix")) {
             grandPrix.push(meeting);
         }
     });
     grandPrix.sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+}
+
+async function fetchChampionshipResults() {
+    // TODO, fix url
+    const data = await cachefetch(`https://api.openf1.org/v1/championship_drivers?meeting_key=1276`);
+    data.forEach(result => {
+        if (driverMap.has(result.driver_number)) {
+            const driver = driverMap.get(result.driver_number);
+            driver.result = result;
+        }
+    });
 }
 
 async function cachefetch(url) {
@@ -56,29 +69,38 @@ async function cachefetch(url) {
 }
 
 function fillTable(players, table) {
+    // Header row
     const headerRow = createChild("tr", table);
-
     createFilledChild("th", headerRow, "Pos.");
     createFilledChild("th", headerRow, "Player");
     createFilledChild("th", headerRow, "Drivers");
+    grandPrix.forEach(gp => {
+        const innerHTML = `${gp.country_code}<br><img src=${gp.country_flag} height=12>`;
+        createFilledChild("th", headerRow, innerHTML);
+    });
+    createFilledChild("th", headerRow, "Points");
 
+    // Player rows
     players.forEach(player => {
-        const playerRow = createChild("tr", table);
-
-        const posCol = createFilledChild("td", playerRow, "0");
-        posCol.rowSpan = player.drivers.length;
-        const nameCol = createFilledChild("td", playerRow, player.name);
-        nameCol.rowSpan = player.drivers.length;
-
         let first = true;
         player.drivers.forEach(driverNbr => {
+            const playerRow = createChild("tr", table);
             if (first) {
-                createFilledChild("td", playerRow, driverMap[driverNbr]["name_acronym"]);
+                const posCol = createFilledChild("td", playerRow, "0");
+                posCol.rowSpan = player.drivers.length;
+                const nameCol = createFilledChild("td", playerRow, player.name);
+                nameCol.rowSpan = player.drivers.length;
                 first = false;
-            } else {
-                const driverRow = createChild("tr", table);
-                createFilledChild("td", driverRow, driverMap[driverNbr]["name_acronym"]);
             }
+            driverData = driverMap.get(driverNbr);
+            console.log(driverData, driverNbr);
+            const nameTd = createFilledChild("td", playerRow, driverData["name_acronym"]);
+            nameTd.style.backgroundColor = `#${driverData["team_colour"]}`;
+            grandPrix.forEach(gp => {
+                createFilledChild("td", playerRow, "&nbsp;");
+            });
+            const points = driverData.result.points_current;
+            createFilledChild("td", playerRow, points);
         });
     });
 }
