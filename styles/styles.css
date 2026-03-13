@@ -1,7 +1,84 @@
-table, th, td {
-  border: 1px solid black;
+/* Base */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 20px;
+  color: #222;
 }
 
-table {
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+/* Table container */
+#standings-table {
+  width: 100%;
+  max-width: 800px;
+  margin: auto;
   border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Header */
+#standings-table th {
+  background: #111;
+  color: white;
+  font-weight: 600;
+  padding: 10px 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Cells */
+#standings-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* Player column */
+#standings-table td:nth-child(2) {
+  font-weight: 600;
+}
+
+/* Position column */
+#standings-table td{
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* Driver cell styling */
+#standings-table td[style*="background-color"] {
+  color: white;
+  font-weight: 600;
+  border-radius: 4px;
+}
+
+/* Mobile improvements */
+@media (max-width: 600px) {
+
+  body {
+    padding: 10px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  #standings-table th,
+  #standings-table td {
+    padding: 8px 4px;
+    font-size: 12px;
+  }
+
+  #standings-table td:first-child {
+    font-size: 14px;
+  }
 }
