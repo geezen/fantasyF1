@@ -65,8 +65,12 @@ async function cachefetch(url) {
         console.log(`Cache miss for ${url}`);
         const response = await fetch(url);
         data = await response.json();
-        localStorage.setItem(cache_key, JSON.stringify(data));
-        console.log(data);
+        if (response.status == 200) {
+            localStorage.setItem(cache_key, JSON.stringify(data));
+            console.log(data);
+        } else {
+            console.log(`Response code ${response.status} with detail "${data.detail}"`);
+        }
     } else {
         console.log(`Using cached response from ${url}`);
     }
