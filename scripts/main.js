@@ -38,6 +38,8 @@ async function fetchDriverInfo() {
 }
 
 async function fetchChampionshipResults() {
+    const sessionsToCheck = [];
+
     let latestRaceKey = -1;
     sessions.forEach(session => {
         let hasHappened = new Date(session.date_end) < new Date();
@@ -48,14 +50,30 @@ async function fetchChampionshipResults() {
     });
     if (latestRaceKey == -1) {
         console.log(`Unable to find a race that has happened this season`);
+    } else {
+        sessionsToCheck.push(latestRaceKey);
     }
-    const data = await cachefetch(`https://api.openf1.org/v1/championship_drivers?session_key=${latestRaceKey}`);
-    data.forEach(result => {
+
+    latestResultsKey = localStorage.getItem("latestChampionshipResults");
+    if (latestResultsKey != null) {
+        sessionsToCheck.push(latestResultsKey);
+    }
+
+    let data = null;
+    for (const session_key of sessionsToCheck) {
+        data = await cachefetch(`https://api.openf1.org/v1/championship_drivers?session_key=${session_key}`);
+        if (data != null) {
+            localStorage.setItem("latestChampionshipResults", latestRaceKey);
+            break;
+        }
+    }
+
+    for (const result of data) {
         if (driverMap.has(result.driver_number)) {
             const driver = driverMap.get(result.driver_number);
             driver.result = result;
         }
-    });
+    }
 }
 
 async function cachefetch(url) {
@@ -69,7 +87,8 @@ async function cachefetch(url) {
             localStorage.setItem(cache_key, JSON.stringify(data));
             console.log(data);
         } else {
-            console.log(`Response code ${response.status} with detail "${data.detail}"`);
+            console.log(`Response code ${response.status} with detail "${data?.detail ?? "none"}"`);
+            return null;
         }
     } else {
         console.log(`Using cached response from ${url}`);
@@ -113,7 +132,7 @@ function fillTable(players, table) {
 
 function getDriverPoints(driverNbr) {
     const driverData = driverMap.get(driverNbr);
-    return driverData.result.points_current ?? 0;
+    return driverData.result?.points_current ?? 0;
 }
 
 function createChild(type, parent) {
