@@ -16,7 +16,6 @@ h2 {
 /* Table container */
 #standings-table {
   width: 100%;
-  max-width: 800px;
   margin: auto;
   border-collapse: collapse;
   background: white;
