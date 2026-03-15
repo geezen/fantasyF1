@@ -1,14 +1,14 @@
 const driverMap = new Map();
 const sessions = [];
+const standingsTable = document.getElementById("standings-table");
 
 async function main() {
-    const standingsTable = document.getElementById("standings-table");
     await fetchSessions();
     await fetchDriverInfo();
     await fetchChampionshipResults();
-    sortDrivers();
-    sortPlayers();
-    fillTable(players, standingsTable);
+    sumPlayerPoints();
+    sortOrderF1();
+    fillStandingsTable();
 }
 
 async function fetchSessions() {
@@ -96,22 +96,26 @@ async function cachefetch(url) {
     return data;
 }
 
-function fillTable(players, table) {
+function fillStandingsTable() {
     // Header row
-    const headerRow = createChild("tr", table);
+    const headerRow = createChild("tr", standingsTable);
     createFilledChild("th", headerRow, "Pos.");
     createFilledChild("th", headerRow, "Player");
     createFilledChild("th", headerRow, "Drivers");
     createFilledChild("th", headerRow, "Driver pts.");
-    createFilledChild("th", headerRow, "F1 pts.");
-    createFilledChild("th", headerRow, "F1.5 pts.");
+    const f1col = createFilledChild("th", headerRow, "F1 pts.");
+    f1col.classList.add("f1");
+    f1col.addEventListener("click", showOrderF1)
+    const f15col = createFilledChild("th", headerRow, "F1.5 pts.");
+    f15col.classList.add("f15");
+    f15col.addEventListener("click", showOrderF15)
 
     // Player rows
     players.forEach((player, index) => {
         let first = true;
         const fullRowSpan = player.drivers.length;
         player.drivers.forEach(driverNbr => {
-            const playerRow = createChild("tr", table);
+            const playerRow = createChild("tr", standingsTable);
             if (first) {
                 const posCol = createFilledChild("td", playerRow, index + 1);
                 posCol.rowSpan = fullRowSpan;
@@ -121,16 +125,35 @@ function fillTable(players, table) {
             let driverData = driverMap.get(driverNbr);
             const driverNameCol = createFilledChild("td", playerRow, driverData["name_acronym"]);
             driverNameCol.style.backgroundColor = `#${driverData["team_colour"]}`;
-            createFilledChild("td", playerRow, getDriverPoints(driverNbr));
+            const driverPtsCol = createFilledChild("td", playerRow, getDriverPoints(driverNbr));
+            if (isTopTeamDriver(driverData)) {
+                driverPtsCol.classList.add("onlyF1");
+            } 
             if (first) {
                 const playerPtsCol = createFilledChild("td", playerRow, player.points);
+                playerPtsCol.classList.add("onlyF1");
                 playerPtsCol.rowSpan = fullRowSpan;
                 const player15PtsCol = createFilledChild("td", playerRow, player.points15);
+                player15PtsCol.classList.add("onlyF15");
                 player15PtsCol.rowSpan = fullRowSpan;
             }
             first = false;
         });
     });
+}
+
+function showOrderF1() {
+    standingsTable.innerHTML = "";
+    standingsTable.dataset.mode = "f1";
+    sortOrderF1();
+    fillStandingsTable();
+}
+
+function showOrderF15() {
+    standingsTable.innerHTML = "";
+    standingsTable.dataset.mode = "f15";
+    sortOrderF15();
+    fillStandingsTable();
 }
 
 function getDriverPoints(driverNbr) {
@@ -150,15 +173,22 @@ function createFilledChild(type, parent, innerHTML) {
     return element;
 }
 
-function sortDrivers() {
+function sortOrderF1() {
+    players.sort((a, b) => b.points - a.points);
     players.forEach(player => {
         player.drivers.sort((a, b) => getDriverPoints(b) - getDriverPoints(a));
     });
 }
 
-function sortPlayers() {
-    sumPlayerPoints();
-    players.sort((a, b) => b.points - a.points);
+function sortOrderF15() {
+    players.sort((a, b) => b.points15 - a.points15);
+    players.forEach(player => {
+        player.drivers.sort((a, b) => {
+            const aPts = isTopTeamDriver(a) ? getDriverPoints(a) - 1000 : getDriverPoints(a);
+            const bPts = isTopTeamDriver(b) ? getDriverPoints(b) - 1000 : getDriverPoints(b);
+            return bPts - aPts;
+        });
+    });
 }
 
 function sumPlayerPoints() {
@@ -168,7 +198,7 @@ function sumPlayerPoints() {
         player.drivers.forEach(driverNbr => {
             let driverPoints = getDriverPoints(driverNbr);
             points += driverPoints;
-            if (!topTeams.includes(driverMap.get(driverNbr).team_name)) {
+            if (!isTopTeamDriver(driverNbr)) {
                 points15 += driverPoints;
             }
         });
@@ -177,4 +207,9 @@ function sumPlayerPoints() {
     });
 }
 
-main()
+function isTopTeamDriver(inp) {
+    const driver = typeof inp === 'object' ? inp : driverMap.get(inp);
+    return topTeams.includes(driver.team_name);
+}
+
+main();
