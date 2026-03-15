@@ -103,7 +103,8 @@ function fillTable(players, table) {
     createFilledChild("th", headerRow, "Player");
     createFilledChild("th", headerRow, "Drivers");
     createFilledChild("th", headerRow, "Driver pts.");
-    createFilledChild("th", headerRow, "Player pts.");
+    createFilledChild("th", headerRow, "F1 pts.");
+    createFilledChild("th", headerRow, "F1.5 pts.");
 
     // Player rows
     players.forEach((player, index) => {
@@ -124,6 +125,8 @@ function fillTable(players, table) {
             if (first) {
                 const playerPtsCol = createFilledChild("td", playerRow, player.points);
                 playerPtsCol.rowSpan = fullRowSpan;
+                const player15PtsCol = createFilledChild("td", playerRow, player.points15);
+                player15PtsCol.rowSpan = fullRowSpan;
             }
             first = false;
         });
