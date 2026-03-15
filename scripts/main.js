@@ -161,10 +161,16 @@ function sortPlayers() {
 function sumPlayerPoints() {
     players.forEach(player => {
         let points = 0;
+        let points15 = 0;
         player.drivers.forEach(driverNbr => {
-            points += getDriverPoints(driverNbr);
+            let driverPoints = getDriverPoints(driverNbr);
+            points += driverPoints;
+            if (!topTeams.includes(driverMap.get(driverNbr).team_name)) {
+                points15 += driverPoints;
+            }
         });
         player.points = points;
+        player.points15 = points15;
     });
 }
 

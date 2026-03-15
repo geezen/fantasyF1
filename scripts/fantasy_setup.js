@@ -18,3 +18,5 @@ const players = [
         drivers: [1, 44, 55, 30, 11]
     }
 ];
+
+const topTeams = ["McLaren", "Red Bull Racing", "Mercedes", "Ferrari"];
