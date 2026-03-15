@@ -63,12 +63,12 @@ async function fetchChampionshipResults() {
     for (const session_key of sessionsToCheck) {
         data = await cachefetch(`https://api.openf1.org/v1/championship_drivers?session_key=${session_key}`);
         if (data != null) {
-            localStorage.setItem("latestChampionshipResults", latestRaceKey);
+            localStorage.setItem("latestChampionshipResults", session_key);
             break;
         }
     }
 
-    for (const result of data) {
+    for (const result of data ?? []) {
         if (driverMap.has(result.driver_number)) {
             const driver = driverMap.get(result.driver_number);
             driver.result = result;
