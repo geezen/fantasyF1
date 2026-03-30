@@ -76,6 +76,35 @@ h2 {
   opacity: 0.7;
 }
 
+/* Round tabs */
+#round-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+#round-tabs button {
+  background: #e5e7eb;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #333;
+  transition: background 0.15s;
+}
+
+#round-tabs button:hover {
+  background: #d1d5db;
+}
+
+#round-tabs button.active {
+  background: #111;
+  color: white;
+}
 
 /* Mobile improvements */
 @media (max-width: 600px) {
