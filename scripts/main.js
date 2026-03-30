@@ -1,6 +1,8 @@
 const driverMap = new Map();
 const sessions = [];
+const completedRaces = [];
 const standingsTable = document.getElementById("standings-table");
+const roundTabsContainer = document.getElementById("round-tabs");
 
 async function main() {
     await fetchSessions();
@@ -9,6 +11,7 @@ async function main() {
     sumPlayerPoints();
     sortOrderF1();
     fillStandingsTable();
+    renderRoundTabs();
 }
 
 async function fetchSessions() {
@@ -46,6 +49,9 @@ async function fetchChampionshipResults() {
         let isRace = session.session_type == "Race";
         if (hasHappened && isRace) {
             latestRaceKey = session.session_key;
+            if (session.session_name == "Race") {
+                completedRaces.push(session);
+            }
         }
     });
     if (latestRaceKey == -1) {
@@ -210,6 +216,42 @@ function sumPlayerPoints() {
 function isTopTeamDriver(inp) {
     const driver = typeof inp === 'object' ? inp : driverMap.get(inp);
     return topTeams.includes(driver.team_name);
+}
+
+function renderRoundTabs() {
+    completedRaces.forEach((race, index) => {
+        const btn = document.createElement("button");
+        btn.textContent = `R${index + 1}`;
+        btn.title = race.location;
+        btn.addEventListener("click", () => loadRound(race, btn));
+        roundTabsContainer.appendChild(btn);
+    });
+    const last = roundTabsContainer.lastElementChild;
+    if (last) last.classList.add("active");
+    if (completedRaces.length > 0) {
+        document.querySelector("h2").textContent = `Fantasy F1 Standings — ${completedRaces[completedRaces.length - 1].location}`;
+    }
+}
+
+async function loadRound(race, activeBtn) {
+    for (const driver of driverMap.values()) delete driver.result;
+
+    let data = await cachefetch(`https://api.openf1.org/v1/championship_drivers?session_key=${race.session_key}`);
+    for (const result of data ?? []) {
+        if (driverMap.has(result.driver_number)) {
+            driverMap.get(result.driver_number).result = result;
+        }
+    }
+
+    sumPlayerPoints();
+    if (standingsTable.dataset.mode === "f15") sortOrderF15(); else sortOrderF1();
+    standingsTable.innerHTML = "";
+    fillStandingsTable();
+
+    roundTabsContainer.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+    activeBtn.classList.add("active");
+
+    document.querySelector("h2").textContent = `Fantasy F1 Standings — ${race.location}`;
 }
 
 main();
